@@ -1,0 +1,47 @@
+# === Unity generated ===
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Mm]emoryCaptures/
+[Uu]serSettings/   # optional: ignore if you don't want per-user editor settings in git
+
+# === OS junk ===
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# === IDE / editor ===
+.vs/
+.vscode/
+.idea/
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+
+# Auto-generated Visual Studio / Rider files
+*.sln
+*.csproj
+*.unityproj
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.mdb
+*.opendb
+*.VC.db
+
+# === Unity crashes / logs ===
+sysinfo.txt
+
+# === Addressables / Streaming assets cache (optional, depends on your workflow) ===
+# Assets/StreamingAssets/aa/
+# Assets/AddressableAssetsData/*/*.bin*
+
+# === If you use IL2CPP / builds in repo root ===
+Il2CppBuildCache/
