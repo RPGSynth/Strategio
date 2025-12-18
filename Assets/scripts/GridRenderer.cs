@@ -20,10 +20,11 @@ public class GridTextureGenerator : MonoBehaviour
     {
         if (!gridOverlayRenderer) return;
 
-        int textureSize = ComputeTextureSize(boardSize, targetPixelsPerCell, marginPercent);
-        int marginPx    = ComputeMarginPx(textureSize, marginPercent);
 
-        var tex = GenerateGridTexture(boardSize, textureSize, marginPx, lineWidthPx);
+        int textureSize = ComputeTextureSize(boardSize+1, targetPixelsPerCell, marginPercent);
+        int marginPx    = Mathf.RoundToInt(textureSize * marginPercent);
+
+        var tex = GenerateGridTexture(boardSize+1, textureSize, marginPx, lineWidthPx);
         tex.wrapMode  = TextureWrapMode.Clamp;
         tex.filterMode = FilterMode.Bilinear;
 
@@ -37,15 +38,10 @@ public class GridTextureGenerator : MonoBehaviour
         return Mathf.ClosestPowerOfTwo(needed);
     }
 
-    int ComputeMarginPx(int texSize, float marginPct)
-    {
-        return Mathf.RoundToInt(texSize * marginPct);
-    }
-
-
     Texture2D GenerateGridTexture(int size, int texSize, int margin, int lineWidth)
     {
         var tex = new Texture2D(texSize, texSize, TextureFormat.RGBA32, false);
+    
         var clear = new Color(0, 0, 0, 0);
         var line = new Color(0, 0, 0, 1);
 

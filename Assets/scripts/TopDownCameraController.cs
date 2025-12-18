@@ -5,7 +5,7 @@ public class TopDownCameraController : MonoBehaviour
 {
     [Header("References")]
     public Transform board;                 // optional: for reset center / clamping
-    public bool clampToBoard = true;        // keep camera from panning past board
+    bool clampToBoard = true;        // keep camera from panning past board
     public float clampPadding = 0.1f;       // extra space allowed (world units)
 
     [Header("Movement")]
@@ -15,7 +15,8 @@ public class TopDownCameraController : MonoBehaviour
     [Header("Zoom (Orthographic)")]
     public float zoomSpeed = 8f;            // ortho units per second
     public float minOrthoSize = 1.5f;
-    public float maxOrthoSize = 30f;
+    // public float maxOrthoSize = 30f;
+    public float voidMargin = 5.0f;
 
     [Header("Keys")]
      KeyCode resetKey = KeyCode.R;
@@ -83,7 +84,8 @@ public class TopDownCameraController : MonoBehaviour
         if (Input.GetKey(zoomOutKey)) zoomDelta += 1f;
 
         targetOrtho += zoomDelta * zoomSpeed * Time.deltaTime;
-        targetOrtho = Mathf.Clamp(targetOrtho, minOrthoSize, maxOrthoSize);
+        float currentMaxZoom = ComputeMaxOrthoSizeFromBoard();
+        targetOrtho = Mathf.Clamp(targetOrtho, minOrthoSize, currentMaxZoom);
 
         // Optional clamping so you don't "see past" the board
         if (clampToBoard && board != null)
@@ -123,4 +125,26 @@ public class TopDownCameraController : MonoBehaviour
         pos.z = Mathf.Clamp(pos.z, minZ, maxZ);
         return pos;
     }
+
+    float ComputeMaxOrthoSizeFromBoard()
+    {
+        var rend = board ? board.GetComponent<Renderer>() : null;
+        if (!rend) return 50f;
+
+        Bounds b = rend.bounds;
+        float boardW = b.size.x;
+        float boardH = b.size.z;
+
+        // CHANGE: We switched from MINUS to PLUS
+        // Old: (boardH * 0.5f) - clampPadding;  <-- Forces view INSIDE board
+        // New: (boardH * 0.5f) + voidMargin;    <-- Allows view OUTSIDE board
+        
+        float maxByHeight = (boardH * 0.5f) + voidMargin;
+        float maxByWidth  = (boardW * 0.5f + voidMargin) / cam.aspect;
+
+        float computed = Mathf.Min(maxByHeight, maxByWidth);
+
+        return Mathf.Max(computed, minOrthoSize);
+    }
+
 }
