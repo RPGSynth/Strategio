@@ -5,7 +5,14 @@ public class BoardHoverDebug : MonoBehaviour
     public BoardGrid board;
     public Transform highlight; // a small quad/cube you move around
     public float highlightY = 0.02f;
-
+    void Start()
+    {
+        if (board && highlight)
+        {
+            float s = board.cellSize;
+            highlight.localScale = new Vector3(s, highlight.localScale.y, s);
+        }
+    }
     void Update()
     {
         if (!board || !highlight) return;

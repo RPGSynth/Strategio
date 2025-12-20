@@ -4,12 +4,12 @@ using UnityEngine;
 public class BoardSettings : ScriptableObject
 {
     [Header("Board")]
-    [Min(1)] public int N = 29;
+    [Min(1)] public int N = 19;
     [Range(0f, 0.2f)] public float marginPercent = 0.08f;
 
     [Header("Grid Texture (Zoom-in quality)")]
     [Min(16)] public int targetPixelsPerCell = 128; // 64 / 128 / 256
-    [Min(1)] public int lineWidthPx = 2;
+    [Min(1)] public int lineWidthPx = 10;
 
     [Header("Optional")]
     public FilterMode gridFilterMode = FilterMode.Bilinear;

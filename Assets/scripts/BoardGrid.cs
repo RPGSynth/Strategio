@@ -1,10 +1,9 @@
 using UnityEngine;
 
+[RequireComponent(typeof(Renderer))]
 public class BoardGrid : MonoBehaviour
 {
-    [Header("Grid")]
-    public int N = 29;                    // cells per side (29x29)
-    [Range(0f, 0.2f)] public float marginPercent = 0.08f; // must match your grid texture marginPercent
+    public BoardSettings settings;
 
     [Header("Read-only debug")]
     public Vector2 boardWorldSize;
@@ -12,6 +11,9 @@ public class BoardGrid : MonoBehaviour
     public float cellSize;
 
     Renderer rend;
+
+    public int N => settings ? settings.N : 0;
+    public float MarginPercent => settings ? settings.marginPercent : 0f;
 
     void Awake()
     {
@@ -29,29 +31,29 @@ public class BoardGrid : MonoBehaviour
 
     public void Recompute()
     {
-        if (!rend) return;
+        if (!rend || !settings) return;
 
-        // World size of the board mesh (works for Plane, Quad, custom mesh)
-        Vector3 size = rend.bounds.size;     // x width, z height in world
+        Vector3 size = rend.bounds.size;        // world size
         boardWorldSize = new Vector2(size.x, size.z);
 
-        playableWorldSize = boardWorldSize * (1f - 2f * marginPercent);
+        playableWorldSize = boardWorldSize * (1f - 2f * settings.marginPercent);
 
-        // Cell size for N cells spanning the playable area
-        // (N cells means N intervals; centers are spaced playable/N)
-        cellSize = playableWorldSize.x / N;  // assume square cells; board should be square-ish
+        // Square cells: choose x dimension as reference
+        cellSize = playableWorldSize.x / settings.N;
     }
 
-    // Convert cell (x,y) to world position at cell center
     public Vector3 CellToWorld(int x, int y, float yWorld = 0f)
     {
-        Vector3 center = rend.bounds.center;
+        if (!rend || !settings) return Vector3.zero;
 
-        float left = center.x - boardWorldSize.x * 0.5f;
-        float bottom = center.z - boardWorldSize.y * 0.5f;
+        Bounds b = rend.bounds;
+        Vector3 center = b.center;
 
-        float marginX = boardWorldSize.x * marginPercent;
-        float marginZ = boardWorldSize.y * marginPercent;
+        float left = center.x - b.size.x * 0.5f;
+        float bottom = center.z - b.size.z * 0.5f;
+
+        float marginX = b.size.x * settings.marginPercent;
+        float marginZ = b.size.z * settings.marginPercent;
 
         float playableLeft = left + marginX;
         float playableBottom = bottom + marginZ;
@@ -62,17 +64,19 @@ public class BoardGrid : MonoBehaviour
         return new Vector3(wx, yWorld, wz);
     }
 
-    // Convert world position to nearest cell (x,y). Returns false if outside playable area.
     public bool WorldToCell(Vector3 world, out Vector2Int cell)
     {
         cell = new Vector2Int(-1, -1);
-        Vector3 center = rend.bounds.center;
+        if (!rend || !settings) return false;
 
-        float left = center.x - boardWorldSize.x * 0.5f;
-        float bottom = center.z - boardWorldSize.y * 0.5f;
+        Bounds b = rend.bounds;
+        Vector3 center = b.center;
 
-        float marginX = boardWorldSize.x * marginPercent;
-        float marginZ = boardWorldSize.y * marginPercent;
+        float left = center.x - b.size.x * 0.5f;
+        float bottom = center.z - b.size.z * 0.5f;
+
+        float marginX = b.size.x * settings.marginPercent;
+        float marginZ = b.size.z * settings.marginPercent;
 
         float playableLeft = left + marginX;
         float playableBottom = bottom + marginZ;
@@ -80,20 +84,16 @@ public class BoardGrid : MonoBehaviour
         float localX = world.x - playableLeft;
         float localZ = world.z - playableBottom;
 
-        // Outside playable area?
         if (localX < 0 || localZ < 0 || localX >= playableWorldSize.x || localZ >= playableWorldSize.y)
             return false;
 
         int x = Mathf.FloorToInt(localX / cellSize);
         int y = Mathf.FloorToInt(localZ / cellSize);
 
-        // Clamp just in case of edge floating error
-        x = Mathf.Clamp(x, 0, N - 1);
-        y = Mathf.Clamp(y, 0, N - 1);
+        x = Mathf.Clamp(x, 0, settings.N - 1);
+        y = Mathf.Clamp(y, 0, settings.N - 1);
 
         cell = new Vector2Int(x, y);
         return true;
     }
-
-    public bool InBounds(int x, int y) => x >= 0 && y >= 0 && x < N && y < N;
 }

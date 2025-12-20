@@ -1,34 +1,42 @@
-using System;
 using UnityEngine;
-
 
 public class GridTextureGenerator : MonoBehaviour
 {
+    public BoardSettings settings;
     public Renderer gridOverlayRenderer;
 
-    [Range(10,101)] public int boardSize = 29;
-    public int targetPixelsPerCell = 128; // 64 / 128 / 256
-    public float marginPercent = 0.08f;   // 0.05–0.12
-    public int lineWidthPx = 2;
+    void Start() => Regenerate();
 
-    void Start()
-    {
-        Regenerate();
-    }
+#if UNITY_EDITOR
+    void OnValidate() => Regenerate();
+#endif
 
     void Regenerate()
     {
-        if (!gridOverlayRenderer) return;
+        if (!settings || !gridOverlayRenderer) return;
 
+        int n = settings.N;
+        float marginPercent = settings.marginPercent;
 
-        int textureSize = ComputeTextureSize(boardSize+1, targetPixelsPerCell, marginPercent);
-        int marginPx    = Mathf.RoundToInt(textureSize * marginPercent);
+        int ppc = settings.targetPixelsPerCell;
+        int lineWidthPx = settings.lineWidthPx;
 
-        var tex = GenerateGridTexture(boardSize+1, textureSize, marginPx, lineWidthPx);
-        tex.wrapMode  = TextureWrapMode.Clamp;
-        tex.filterMode = FilterMode.Bilinear;
+        int textureSize = ComputeTextureSize(n, ppc, marginPercent);
+        int marginPx = ComputeMarginPx(textureSize, marginPercent);
 
+        var tex = GenerateGridTexture(n, textureSize, marginPx, lineWidthPx);
+        tex.wrapMode = TextureWrapMode.Clamp;
+        tex.filterMode = settings.gridFilterMode;
+
+        // In edit mode, sharedMaterial is safer; at runtime material is fine.
+#if UNITY_EDITOR
+        if (!Application.isPlaying)
+            gridOverlayRenderer.sharedMaterial.mainTexture = tex;
+        else
+            gridOverlayRenderer.material.mainTexture = tex;
+#else
         gridOverlayRenderer.material.mainTexture = tex;
+#endif
     }
 
     int ComputeTextureSize(int n, int ppc, float marginPct)
@@ -38,23 +46,27 @@ public class GridTextureGenerator : MonoBehaviour
         return Mathf.ClosestPowerOfTwo(needed);
     }
 
-    Texture2D GenerateGridTexture(int size, int texSize, int margin, int lineWidth)
+    int ComputeMarginPx(int texSize, float marginPct)
+    {
+        return Mathf.RoundToInt(texSize * marginPct);
+    }
+
+
+    Texture2D GenerateGridTexture(int cellsPerSide, int texSize, int margin, int lineWidth)
     {
         var tex = new Texture2D(texSize, texSize, TextureFormat.RGBA32, false);
-    
         var clear = new Color(0, 0, 0, 0);
         var line = new Color(0, 0, 0, 1);
 
-        // Clear
         var pixels = new Color[texSize * texSize];
         for (int i = 0; i < pixels.Length; i++) pixels[i] = clear;
 
         int inner = texSize - 2 * margin;
-        float step = inner / (float)(size - 1);
+        float step = inner / (float)cellsPerSide; // ✅ N squares => step = inner / N
 
-        void DrawVerticalLine(int x)
+        void DrawVertical(int x)
         {
-            for (int dx = -lineWidth/2; dx <= lineWidth/2; dx++)
+            for (int dx = -lineWidth / 2; dx <= lineWidth / 2; dx++)
             {
                 int xx = x + dx;
                 if (xx < 0 || xx >= texSize) continue;
@@ -63,9 +75,9 @@ public class GridTextureGenerator : MonoBehaviour
             }
         }
 
-        void DrawHorizontalLine(int y)
+        void DrawHorizontal(int y)
         {
-            for (int dy = -lineWidth/2; dy <= lineWidth/2; dy++)
+            for (int dy = -lineWidth / 2; dy <= lineWidth / 2; dy++)
             {
                 int yy = y + dy;
                 if (yy < 0 || yy >= texSize) continue;
@@ -74,12 +86,13 @@ public class GridTextureGenerator : MonoBehaviour
             }
         }
 
-        for (int i = 0; i < size; i++)
+        // ✅ draw N+1 lines
+        for (int i = 0; i <= cellsPerSide; i++)
         {
             int x = Mathf.RoundToInt(margin + i * step);
             int y = Mathf.RoundToInt(margin + i * step);
-            DrawVerticalLine(x);
-            DrawHorizontalLine(y);
+            DrawVertical(x);
+            DrawHorizontal(y);
         }
 
         tex.SetPixels(pixels);
