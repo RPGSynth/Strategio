@@ -9,11 +9,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3c22f5c8238a1d84daadab18ed58b359, type: 3}
-  m_Name: BoardSettings
+  m_Script: {fileID: 11500000, guid: 7e1273c38871c9d4eb60d13c23d18b1a, type: 3}
+  m_Name: PieceSettings
   m_EditorClassIdentifier: 
-  N: 19
-  marginPercent: 0.08
-  targetPixelsPerCell: 128
-  lineWidthPx: 10
-  gridFilterMode: 1
+  maxTiles: 5
+  offsets:
+  - {x: 0, y: 0}
+  allowRotate: 1
+  allowFlip: 0
