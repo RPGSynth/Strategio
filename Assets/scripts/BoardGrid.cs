@@ -96,4 +96,6 @@ public class BoardGrid : MonoBehaviour
         cell = new Vector2Int(x, y);
         return true;
     }
+
+    public bool InBounds(int x, int y) => x >= 0 && y >= 0 && x < settings.N && y < settings.N;
 }
