@@ -3,6 +3,9 @@ using UnityEngine;
 
 public class PieceView : MonoBehaviour
 {
+
+    public Material placedMat;
+
     public BoardGrid board;
     public float y = 0.02f;          // height above board
     public float tilePadding = 0.92f; // 0.92 leaves a small gap between tiles
@@ -26,9 +29,10 @@ public class PieceView : MonoBehaviour
 
             // Remove collider so raycasts hit board, not pieces (optional)
             var col = t.GetComponent<Collider>();
-            var r = t.GetComponent<Renderer>();
-            r.material.color = Color.magenta;
             if (col) Destroy(col);
+            
+            var r = t.GetComponent<Renderer>();
+            if (r && placedMat) r.sharedMaterial = placedMat;
 
             tiles.Add(t);
         }

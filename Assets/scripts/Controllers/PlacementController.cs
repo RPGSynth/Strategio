@@ -5,6 +5,12 @@ public class PlacementController : MonoBehaviour
 {
     public BoardGrid board;
     public BoardState state;
+    public LayerMask boardMask; 
+
+    [Header("Materials")]
+    public Material previewValidMat;
+    public Material previewInvalidMat;
+    public Material placedMat;
 
     [Header("Current piece")]
     public PieceSettings currentPiece;
@@ -15,6 +21,7 @@ public class PlacementController : MonoBehaviour
 
     int rot90 = 0;
     bool flip = false;
+
 
     readonly List<Transform> previewTiles = new();
 
@@ -36,7 +43,7 @@ public class PlacementController : MonoBehaviour
         if (!cam) return;
 
         Ray ray = cam.ScreenPointToRay(Input.mousePosition);
-        if (!Physics.Raycast(ray, out RaycastHit hit, 500f))
+        if (!Physics.Raycast(ray, out RaycastHit hit, 500f, boardMask))
         {
             SetPreviewActive(false);
             return;
@@ -49,7 +56,13 @@ public class PlacementController : MonoBehaviour
         }
 
         // Compute covered cells
-        bool canPlace = state.CanPlace(currentPiece, anchor, rot90, flip, out List<Vector2Int> covered);
+        bool canPlace = state.CanPlace(currentPiece, anchor, rot90, flip, out var covered);
+
+        // Filter for drawing only
+        var drawable = new List<Vector2Int>(covered.Count);
+        foreach (var c in covered)
+            if (board.InBounds(c.x, c.y))
+                drawable.Add(c);
 
         // Draw preview
         DrawPreview(covered, canPlace);
@@ -64,6 +77,7 @@ public class PlacementController : MonoBehaviour
             var view = go.AddComponent<PieceView>();
             view.board = board;
             view.y = previewY;
+            view.placedMat = placedMat;
             view.Build(placedCells);
         }
     }
@@ -87,6 +101,12 @@ public class PlacementController : MonoBehaviour
             // simple feedback: higher/lower alpha look would require a material.
             // For now: move slightly higher if invalid
             previewTiles[i].position += canPlace ? Vector3.zero : new Vector3(0f, 0.01f, 0f);
+
+
+            // Change material depending on place status
+            var r = previewTiles[i].GetComponent<Renderer>();
+            if (r)
+                r.sharedMaterial = canPlace ? previewValidMat : previewInvalidMat;
         }
 
         previewRoot.gameObject.SetActive(true);
@@ -101,7 +121,6 @@ public class PlacementController : MonoBehaviour
 
             var col = t.GetComponent<Collider>();
             var r = t.GetComponent<Renderer>();
-            r.material.color = Color.cyan;
             if (col) Destroy(col);
 
             previewTiles.Add(t);

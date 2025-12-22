@@ -42,23 +42,29 @@ public class BoardState : MonoBehaviour
     {
         covered = new List<Vector2Int>(def.offsets.Length);
 
-        if (!board || !board.settings) return false;
+        bool valid = true;
 
         foreach (var off in def.offsets)
         {
             Vector2Int t = TransformOffset(off, rot90, flip);
             Vector2Int cell = anchor + t;
 
+            // Always add, even if invalid (so preview can draw it)
+            covered.Add(cell);
+
             if (!board.InBounds(cell.x, cell.y))
-                return false;
+            {
+                valid = false;
+                continue;
+            }
 
             if (!IsEmpty(cell.x, cell.y))
-                return false;
-
-            covered.Add(cell);
+            {
+                valid = false;
+            }
         }
 
-        return true;
+        return valid;
     }
 
     public int Place(PieceSettings def, Vector2Int anchor, int rot90, bool flip, out List<Vector2Int> covered)
