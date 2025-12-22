@@ -6,8 +6,11 @@ public class PlacementController : MonoBehaviour
     public BoardGrid board;
     public BoardState state;
 
-    [Header("Current piece")]
-    public PieceSettings currentPiece;
+    // Optional reference to PieceManager to notify on placement
+    public PieceManager pieceManager;
+
+    // The piece currently selected for placement
+    public PieceSettings SelectedPiece { get; private set; }
 
     [Header("Preview")]
     public Transform previewRoot;     // empty object in scene
@@ -18,17 +21,35 @@ public class PlacementController : MonoBehaviour
 
     readonly List<Transform> previewTiles = new();
 
+    public void SelectPiece(PieceSettings piece)
+    {
+        SelectedPiece = piece;
+        // Reset rotation/flip when selecting a new piece (optional choice)
+        rot90 = 0;
+        flip = false;
+
+        // Hide preview if deselected
+        if (piece == null)
+        {
+            SetPreviewActive(false);
+        }
+    }
+
     void Update()
     {
-        if (!board || !state || !currentPiece) return;
+        if (!board || !state || !SelectedPiece)
+        {
+            SetPreviewActive(false);
+            return;
+        }
 
         // Rotate / flip controls (optional, but handy)
-        if (currentPiece.allowRotate)
+        if (SelectedPiece.allowRotate)
         {
             if (Input.GetKeyDown(KeyCode.E)) rot90 = (rot90 + 1) % 4;
             if (Input.GetKeyDown(KeyCode.Q)) rot90 = (rot90 + 3) % 4;
         }
-        if (currentPiece.allowFlip && Input.GetKeyDown(KeyCode.F))
+        if (SelectedPiece.allowFlip && Input.GetKeyDown(KeyCode.F))
             flip = !flip;
 
         // Raycast to board
@@ -49,7 +70,7 @@ public class PlacementController : MonoBehaviour
         }
 
         // Compute covered cells
-        bool canPlace = state.CanPlace(currentPiece, anchor, rot90, flip, out List<Vector2Int> covered);
+        bool canPlace = state.CanPlace(SelectedPiece, anchor, rot90, flip, out List<Vector2Int> covered);
 
         // Draw preview
         DrawPreview(covered, canPlace);
@@ -57,14 +78,23 @@ public class PlacementController : MonoBehaviour
         // Click to place
         if (Input.GetMouseButtonDown(0) && canPlace)
         {
-            int id = state.Place(currentPiece, anchor, rot90, flip, out var placedCells);
+            int id = state.Place(SelectedPiece, anchor, rot90, flip, out var placedCells);
 
             // Spawn a placed piece visual
-            var go = new GameObject($"Piece_{id}_{currentPiece.name}");
+            var go = new GameObject($"Piece_{id}_{SelectedPiece.name}");
             var view = go.AddComponent<PieceView>();
             view.board = board;
             view.y = previewY;
             view.Build(placedCells);
+
+            // Consume the piece
+            if (pieceManager)
+            {
+                pieceManager.RemovePiece(SelectedPiece);
+                // Deselect after placement (or keep selected if we had multiples,
+                // but for now, let's deselect to force picking the next one)
+                SelectPiece(null);
+            }
         }
     }
 
