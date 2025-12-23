@@ -12,6 +12,10 @@ public class PlacementController : MonoBehaviour
     public Material previewInvalidMat;
     public Material placedMat;
 
+    [Header("Player")]
+    public TurnManager turn;
+    public PlayersSettings players;
+
     [Header("Current piece")]
     public PieceSettings currentPiece;
 
@@ -22,7 +26,7 @@ public class PlacementController : MonoBehaviour
     int rot90 = 0;
     bool flip = false;
 
-
+    readonly Dictionary<int, GameObject> placedVisuals = new();
     readonly List<Transform> previewTiles = new();
 
     void Update()
@@ -70,15 +74,40 @@ public class PlacementController : MonoBehaviour
         // Click to place
         if (Input.GetMouseButtonDown(0) && canPlace)
         {
-            int id = state.Place(currentPiece, anchor, rot90, flip, out var placedCells);
+            int owner = (turn && turn.PlayerCount > 0) ? turn.CurrentPlayer : 0;
 
-            // Spawn a placed piece visual
+            int id = state.Place(currentPiece, anchor, rot90, flip, owner, out var placedCells);
+            if (id == -1) return;
+
             var go = new GameObject($"Piece_{id}_{currentPiece.name}");
+            placedVisuals[id] = go;
+
             var view = go.AddComponent<PieceView>();
             view.board = board;
             view.y = previewY;
-            view.placedMat = placedMat;
+            if (players) view.placedMat = players.GetPlacedMat(owner);
             view.Build(placedCells);
+
+            Debug.Log($"Advancing turn. turnNull={(turn==null)} playerCount={(turn ? turn.PlayerCount : -1)}");
+            if (turn) turn.NextTurn();
+        }
+
+        if (Input.GetMouseButtonDown(1))
+        {
+            int pieceId = state.GetPieceIdAtCell(anchor);
+            if (pieceId != -1)
+            {
+                if (state.Remove(pieceId))
+                {
+                    if (placedVisuals.TryGetValue(pieceId, out var go))
+                    {
+                        Destroy(go);
+                        placedVisuals.Remove(pieceId);
+                    }
+                    Debug.Log($"Advancing turn. turnNull={(turn==null)} playerCount={(turn ? turn.PlayerCount : -1)}");
+                    if (turn) turn.NextTurn();
+                }
+            }
         }
     }
 

@@ -20,9 +20,6 @@ public class ModeController : MonoBehaviour
 
     public void TogglePaletteMode()
     {
-        Debug.Log("TogglePaletteMode clicked");
-        Debug.Log($"BoardRenderer: {(boardRenderer ? boardRenderer.name : "NULL")} center={ (boardRenderer ? boardRenderer.bounds.center.ToString() : "n/a") }");
-        Debug.Log($"PaletteRenderer: {(paletteRenderer ? paletteRenderer.name : "NULL")} center={ (paletteRenderer ? paletteRenderer.bounds.center.ToString() : "n/a") }");
         paletteMode = !paletteMode;
 
         if (paletteMode)

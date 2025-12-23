@@ -15,5 +15,7 @@ MonoBehaviour:
   maxTiles: 5
   offsets:
   - {x: 0, y: 0}
+  - {x: 1, y: 0}
+  - {x: 1, y: 1}
   allowRotate: 1
   allowFlip: 0

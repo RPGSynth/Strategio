@@ -456,7 +456,7 @@ GameObject:
   - component: {fileID: 144255877}
   - component: {fileID: 144255876}
   - component: {fileID: 144255879}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Board
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1206,6 +1206,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   board: {fileID: 144255879}
   state: {fileID: 360753911}
+  boardMask:
+    serializedVersion: 2
+    m_Bits: 64
+  previewValidMat: {fileID: 2100000, guid: 88d6bb5635380874b8662a164b902983, type: 2}
+  previewInvalidMat: {fileID: 2100000, guid: 5cb2385693ba92744a8f557dbc23a16c, type: 2}
+  placedMat: {fileID: 2100000, guid: 4a4ce097f17d023499a7114435f3e84d, type: 2}
   currentPiece: {fileID: 11400000, guid: 95b3049964d5e1841af85fa2e08a6d69, type: 2}
   previewRoot: {fileID: 242973678}
   previewY: 0.02

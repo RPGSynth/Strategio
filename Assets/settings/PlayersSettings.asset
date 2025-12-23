@@ -9,14 +9,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7e1273c38871c9d4eb60d13c23d18b1a, type: 3}
-  m_Name: Fancy_L_Piece
+  m_Script: {fileID: 11500000, guid: b1f75adab7328724a85e52b9b40c057c, type: 3}
+  m_Name: PlayersSettings
   m_EditorClassIdentifier: 
-  maxTiles: 5
-  offsets:
-  - {x: 0, y: 0}
-  - {x: 1, y: 0}
-  - {x: 0, y: 1}
-  - {x: 0, y: 2}
-  allowRotate: 1
-  allowFlip: 0
+  players:
+  - name: P1
+    placedMaterial: {fileID: 0}
+  - name: P2
+    placedMaterial: {fileID: 0}

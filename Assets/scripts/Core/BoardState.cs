@@ -12,6 +12,10 @@ public class BoardState : MonoBehaviour
     // For undo / debugging: pieceId -> list of occupied cells
     readonly Dictionary<int, List<Vector2Int>> pieceCells = new();
 
+    // pieceId -> playerIndex
+    readonly Dictionary<int, int> pieceOwner = new(); // pieceId -> playerIndex
+
+
     void Awake()
     {
         Init();
@@ -67,12 +71,14 @@ public class BoardState : MonoBehaviour
         return valid;
     }
 
-    public int Place(PieceSettings def, Vector2Int anchor, int rot90, bool flip, out List<Vector2Int> covered)
+    public int Place(PieceSettings def, Vector2Int anchor, int rot90, bool flip, int ownerIndex, out List<Vector2Int> covered)
     {
         if (!CanPlace(def, anchor, rot90, flip, out covered))
             return -1;
 
         int id = nextPieceId++;
+        pieceOwner[id] = ownerIndex;
+
         foreach (var c in covered)
             occ[c.x, c.y] = id;
 
@@ -88,7 +94,14 @@ public class BoardState : MonoBehaviour
             occ[c.x, c.y] = -1;
 
         pieceCells.Remove(pieceId);
+        pieceOwner.Remove(pieceId);
         return true;
+    }
+    public int GetPieceIdAtCell(Vector2Int cell)
+    {
+        if (!board || !board.settings) return -1;
+        if (!board.InBounds(cell.x, cell.y)) return -1;
+        return occ[cell.x, cell.y];
     }
 
     static Vector2Int TransformOffset(Vector2Int o, int rot90, bool flip)
