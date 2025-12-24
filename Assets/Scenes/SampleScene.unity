@@ -830,7 +830,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   players: {fileID: 11400000, guid: 78d7410d11d3bf5499f2ea42ea8d16ae, type: 2}
-  currentPlayerIndex: 1
+  currentPlayerIndex: 0
 --- !u!1 &610581095
 GameObject:
   m_ObjectHideFlags: 0
@@ -865,7 +865,7 @@ MonoBehaviour:
   boardGrid: {fileID: 144255879}
   paletteDefaultMat: {fileID: 2100000, guid: 4a4ce097f17d023499a7114435f3e84d, type: 2}
   paletteLayerName: Palette
-  spawnCount: 50
+  spawnCount: 85
   minCells: 1
   maxCells: 6
   rarityMaxFactor: 3
@@ -1242,6 +1242,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   board: {fileID: 144255875}
+  clampRenderer: {fileID: 0}
   clampToBoard: 1
   clampPadding: 0.1
   panSpeed: 8
@@ -1424,6 +1425,7 @@ MonoBehaviour:
   currentPiece: {fileID: 11400000, guid: 95b3049964d5e1841af85fa2e08a6d69, type: 2}
   previewRoot: {fileID: 242973678}
   previewY: 0.02
+  previewPlayerAlpha: 0
 --- !u!4 &1522781778
 Transform:
   m_ObjectHideFlags: 0

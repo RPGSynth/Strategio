@@ -22,12 +22,16 @@ public class PlacementController : MonoBehaviour
     [Header("Preview")]
     public Transform previewRoot;     // empty object in scene
     public float previewY = 0.02f;
+    [Range(0f, 1f)] public float previewPlayerAlpha = 0.25f;
 
     int rot90 = 0;
     bool flip = false;
 
     readonly Dictionary<int, GameObject> placedVisuals = new();
     readonly List<Transform> previewTiles = new();
+    MaterialPropertyBlock previewBlock;
+    static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+    static readonly int ColorId = Shader.PropertyToID("_Color");
 
     void Update()
     {
@@ -133,7 +137,22 @@ public class PlacementController : MonoBehaviour
             // Change material depending on place status
             var r = previewTiles[i].GetComponent<Renderer>();
             if (r)
-                r.sharedMaterial = canPlace ? previewValidMat : previewInvalidMat;
+            {
+                if (canPlace)
+                {
+                    bool usePlayerMat = TryGetPlayerPreviewMaterial(out var validMat);
+                    r.sharedMaterial = usePlayerMat ? validMat : previewValidMat;
+                    if (usePlayerMat)
+                        ApplyPreviewAlpha(r, validMat);
+                    else
+                        r.SetPropertyBlock(null);
+                }
+                else
+                {
+                    r.sharedMaterial = previewInvalidMat;
+                    r.SetPropertyBlock(null);
+                }
+            }
         }
 
         previewRoot.gameObject.SetActive(true);
@@ -157,5 +176,45 @@ public class PlacementController : MonoBehaviour
     void SetPreviewActive(bool active)
     {
         if (previewRoot) previewRoot.gameObject.SetActive(active);
+    }
+
+    bool TryGetPlayerPreviewMaterial(out Material mat)
+    {
+        mat = null;
+        if (!players || !turn || players.Count == 0) return false;
+        mat = players.GetPlacedMat(turn.CurrentPlayer);
+        return mat != null;
+    }
+
+    void ApplyPreviewAlpha(Renderer r, Material mat)
+    {
+        if (!r || !mat)
+        {
+            if (r) r.SetPropertyBlock(null);
+            return;
+        }
+
+        previewBlock ??= new MaterialPropertyBlock();
+        previewBlock.Clear();
+
+        if (mat.HasProperty(BaseColorId))
+        {
+            Color c = mat.GetColor(BaseColorId);
+            c.a = previewPlayerAlpha;
+            previewBlock.SetColor(BaseColorId, c);
+            r.SetPropertyBlock(previewBlock);
+            return;
+        }
+
+        if (mat.HasProperty(ColorId))
+        {
+            Color c = mat.GetColor(ColorId);
+            c.a = previewPlayerAlpha;
+            previewBlock.SetColor(ColorId, c);
+            r.SetPropertyBlock(previewBlock);
+            return;
+        }
+
+        r.SetPropertyBlock(null);
     }
 }
