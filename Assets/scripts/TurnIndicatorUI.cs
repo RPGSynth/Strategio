@@ -23,25 +23,6 @@ public class TurnIndicatorUI : MonoBehaviour
         int i = turn.CurrentPlayer;
 
         label.text = $"{players.GetName(i)} is playing";
-
-        // Prefer explicit uiColor, fallback to material color if uiColor wasn't set meaningfully
-        Color c = players.players[i].uiColor;
-        if (c.a <= 0.001f || (c.r == 1f && c.g == 1f && c.b == 1f)) // "default-ish"
-        {
-            var mat = players.GetPlacedMat(i);
-            c = TryGetMaterialColor(mat, Color.white);
-        }
-
-        label.color = c;
-    }
-
-    static Color TryGetMaterialColor(Material mat, Color fallback)
-    {
-        if (!mat) return fallback;
-
-        // URP Lit uses _BaseColor; built-in Standard uses _Color
-        if (mat.HasProperty("_BaseColor")) return mat.GetColor("_BaseColor");
-        if (mat.HasProperty("_Color")) return mat.GetColor("_Color");
-        return fallback;
+        label.color = players.GetUIColor(i, Color.white);
     }
 }
