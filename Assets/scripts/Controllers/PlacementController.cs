@@ -88,7 +88,6 @@ public class PlacementController : MonoBehaviour
             if (players) view.placedMat = players.GetPlacedMat(owner);
             view.Build(placedCells);
 
-            Debug.Log($"Advancing turn. turnNull={(turn==null)} playerCount={(turn ? turn.PlayerCount : -1)}");
             if (turn) turn.NextTurn();
         }
 
@@ -104,7 +103,6 @@ public class PlacementController : MonoBehaviour
                         Destroy(go);
                         placedVisuals.Remove(pieceId);
                     }
-                    Debug.Log($"Advancing turn. turnNull={(turn==null)} playerCount={(turn ? turn.PlayerCount : -1)}");
                     if (turn) turn.NextTurn();
                 }
             }

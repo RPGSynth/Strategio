@@ -9,11 +9,6 @@ public class TurnManager : MonoBehaviour
 
     public int CurrentPlayer => Mathf.Clamp(currentPlayerIndex, 0, Mathf.Max(0, PlayerCount - 1));
 
-    void Start()
-    {
-        Debug.Log($"TurnManager started. players={(players ? players.Count : 0)} current={CurrentPlayer}");
-    }
-
     public void NextTurn()
     {
         if (PlayerCount <= 0) return;

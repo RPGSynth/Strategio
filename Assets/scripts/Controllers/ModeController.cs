@@ -31,7 +31,11 @@ public class ModeController : MonoBehaviour
     void EnterPaletteMode()
     {
         if (placement) placement.enabled = false; // prevents placing while picking
-        if (camController) camController.clampToBoard = false; // <-- allow travel
+        if (camController)
+        {
+            camController.clampRenderer = paletteRenderer;
+            camController.clampToBoard = true;
+        }
 
         if (camController && paletteRenderer)
         {
@@ -43,7 +47,11 @@ public class ModeController : MonoBehaviour
     void EnterBoardMode()
     {
         if (placement) placement.enabled = true;
-        if (camController) camController.clampToBoard = false; 
+        if (camController)
+        {
+            camController.clampRenderer = boardRenderer;
+            camController.clampToBoard = true;
+        }
         
 
         if (camController && boardRenderer)
@@ -70,12 +78,13 @@ public class ModeController : MonoBehaviour
                 if (pp && pp.piece && placement)
                 {
                     placement.currentPiece = pp.piece;
-                    Debug.Log($"Selected piece: {pp.piece.name}");
+                    Destroy(pp.gameObject);
 
                     if (autoCloseOnPick)
                         TogglePaletteMode();
                 }
             }
         }
+
     }
 }

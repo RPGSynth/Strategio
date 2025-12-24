@@ -14,6 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   players:
   - name: P1
-    placedMaterial: {fileID: 0}
+    placedMaterial: {fileID: 2100000, guid: ce562fca7efb77144b36bf27e783e692, type: 2}
+    uiColor: {r: 1, g: 1, b: 1, a: 1}
   - name: P2
-    placedMaterial: {fileID: 0}
+    placedMaterial: {fileID: 2100000, guid: 1a0d420336c89e149ac3803d16409d59, type: 2}
+    uiColor: {r: 1, g: 1, b: 1, a: 1}
+  - name: P3
+    placedMaterial: {fileID: 2100000, guid: 769a092f664040346a745383e2736b9b, type: 2}
+    uiColor: {r: 1, g: 1, b: 1, a: 1}
+  - name: P4
+    placedMaterial: {fileID: 2100000, guid: 2541fd3845f735a47b165a7df1c2eee3, type: 2}
+    uiColor: {r: 1, g: 1, b: 1, a: 1}
+  - name: P5
+    placedMaterial: {fileID: 2100000, guid: f84b3be21c485ab45b0a71f916c5250d, type: 2}
+    uiColor: {r: 1, g: 1, b: 1, a: 1}

@@ -5,6 +5,7 @@ public class TopDownCameraController : MonoBehaviour
 {
     [Header("References")]
     public Transform board;                 // optional: for reset center / clamping
+    public Renderer clampRenderer;          // optional: override clamp/zoom bounds (palette or board)
     public bool clampToBoard = true;        // keep camera from panning past board
     public float clampPadding = 0.1f;       // extra space allowed (world units)
 
@@ -105,7 +106,7 @@ public class TopDownCameraController : MonoBehaviour
 
     Vector3 ClampTargetToBoard(Vector3 pos, float orthoSize)
     {
-        var rend = board.GetComponent<Renderer>();
+        var rend = GetClampRenderer();
         if (rend == null) return pos;
 
         Bounds b = rend.bounds;
@@ -129,7 +130,7 @@ public class TopDownCameraController : MonoBehaviour
 
     float ComputeMaxOrthoSizeFromBoard()
     {
-        var rend = board ? board.GetComponent<Renderer>() : null;
+        var rend = GetClampRenderer();
         if (!rend) return 50f;
 
         Bounds b = rend.bounds;
@@ -142,6 +143,12 @@ public class TopDownCameraController : MonoBehaviour
         float computed = Mathf.Min(maxByHeight, maxByWidth);
 
         return Mathf.Max(computed, minOrthoSize);
+    }
+
+    Renderer GetClampRenderer()
+    {
+        if (clampRenderer) return clampRenderer;
+        return board ? board.GetComponent<Renderer>() : null;
     }
 
     public void SetTargetView(Vector3 worldCenterXZ, float orthoSize)

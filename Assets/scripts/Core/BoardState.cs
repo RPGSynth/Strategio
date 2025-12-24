@@ -120,4 +120,7 @@ public class BoardState : MonoBehaviour
             _ => o
         };
     }
+    
+    public bool TryGetOwner(int pieceId, out int ownerIndex) => pieceOwner.TryGetValue(pieceId, out ownerIndex);
+
 }
