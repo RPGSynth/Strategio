@@ -14,7 +14,8 @@ public class BoardState : MonoBehaviour
 
     // pieceId -> playerIndex
     readonly Dictionary<int, int> pieceOwner = new(); // pieceId -> playerIndex
-
+    readonly Dictionary<int, int> piecePlacementOrder = new(); // pieceId -> placement sequence
+    int lastPlacementOrder = 0;
 
     void Awake()
     {
@@ -37,7 +38,9 @@ public class BoardState : MonoBehaviour
             for (int y = 0; y < board.settings.N; y++)
                 occ[x, y] = -1;
         pieceCells.Clear();
+        piecePlacementOrder.Clear();
         nextPieceId = 1;
+        lastPlacementOrder = 0;
     }
 
     public bool IsEmpty(int x, int y) => occ[x, y] == -1;
@@ -71,13 +74,15 @@ public class BoardState : MonoBehaviour
         return valid;
     }
 
-    public int Place(PieceSettings def, Vector2Int anchor, int rot90, bool flip, int ownerIndex, out List<Vector2Int> covered)
+    public int Place(PieceSettings def, Vector2Int anchor, int rot90, bool flip, int ownerIndex, int placementOrder, out List<Vector2Int> covered)
     {
         if (!CanPlace(def, anchor, rot90, flip, out covered))
             return -1;
 
         int id = nextPieceId++;
         pieceOwner[id] = ownerIndex;
+        piecePlacementOrder[id] = placementOrder;
+        if (placementOrder > lastPlacementOrder) lastPlacementOrder = placementOrder;
 
         foreach (var c in covered)
             occ[c.x, c.y] = id;
@@ -95,6 +100,7 @@ public class BoardState : MonoBehaviour
 
         pieceCells.Remove(pieceId);
         pieceOwner.Remove(pieceId);
+        piecePlacementOrder.Remove(pieceId);
         return true;
     }
     public int GetPieceIdAtCell(Vector2Int cell)
@@ -122,5 +128,9 @@ public class BoardState : MonoBehaviour
     }
     
     public bool TryGetOwner(int pieceId, out int ownerIndex) => pieceOwner.TryGetValue(pieceId, out ownerIndex);
+    public bool TryGetPlacementOrder(int pieceId, out int placementOrder) => piecePlacementOrder.TryGetValue(pieceId, out placementOrder);
+    public int LastPlacementOrder => lastPlacementOrder;
+
+    public IReadOnlyDictionary<int, int> PiecePlacementOrders => piecePlacementOrder;
 
 }

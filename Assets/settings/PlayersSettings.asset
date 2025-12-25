@@ -28,3 +28,7 @@ MonoBehaviour:
   - name: P5
     placedMaterial: {fileID: 2100000, guid: f84b3be21c485ab45b0a71f916c5250d, type: 2}
     uiColor: {r: 1, g: 1, b: 1, a: 1}
+  - name: P6
+    placedMaterial: {fileID: 2100000, guid: f84b3be21c485ab45b0a71f916c5250d, type: 2}
+    uiColor: {r: 1, g: 1, b: 1, a: 1}
+  autoNamePlayers: 1

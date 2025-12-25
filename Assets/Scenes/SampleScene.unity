@@ -566,7 +566,7 @@ MonoBehaviour:
   settings: {fileID: 11400000, guid: 3e08c9b91414e4249a6da71e81f272b0, type: 2}
   boardWorldSize: {x: 10, y: 10}
   playableWorldSize: {x: 8.400001, y: 8.400001}
-  cellSize: 0.4421053
+  cellSize: 0.28965518
 --- !u!1 &242973677
 GameObject:
   m_ObjectHideFlags: 0
@@ -865,10 +865,10 @@ MonoBehaviour:
   boardGrid: {fileID: 144255879}
   paletteDefaultMat: {fileID: 2100000, guid: 4a4ce097f17d023499a7114435f3e84d, type: 2}
   paletteLayerName: Palette
-  spawnCount: 85
+  spawnCount: 75
   minCells: 1
-  maxCells: 6
-  rarityMaxFactor: 3
+  maxCells: 5
+  rarityMaxFactor: 1.1
   marginWorld: 0.5
   yOffset: 0
   gapCells: 1
@@ -1250,6 +1250,59 @@ MonoBehaviour:
   zoomSpeed: 8
   minOrthoSize: 1.5
   voidMargin: 5
+--- !u!1 &1192221430
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1192221432}
+  - component: {fileID: 1192221431}
+  m_Layer: 0
+  m_Name: ScoringManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1192221431
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1192221430}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cdb1ca99dee55264b98fbaf18e3d3a5b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  state: {fileID: 360753911}
+  grid: {fileID: 144255879}
+  players: {fileID: 11400000, guid: 78d7410d11d3bf5499f2ea42ea8d16ae, type: 2}
+  autoEvaluateOnStart: 0
+  toggleOverlayKey: 289
+  overlayMaterial: {fileID: 2100000, guid: ce562fca7efb77144b36bf27e783e692, type: 2}
+  overlayAlphaFree: 0.508
+  overlayAlphaCaptured: 0.5
+  overlayY: 0.02
+--- !u!4 &1192221432
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1192221430}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 242.79504, y: -132.79875, z: 394.30292}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1269759785
 GameObject:
   m_ObjectHideFlags: 0
@@ -1277,8 +1330,8 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1269759785}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 15}
+  m_LocalScale: {x: 0.066839546, y: 0.09494839, z: 0.011701908}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 34832548}
@@ -1286,8 +1339,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -373, y: 245}
-  m_SizeDelta: {x: 160, y: 30}
+  m_AnchoredPosition: {x: -416, y: 206}
+  m_SizeDelta: {x: 1024, y: 1024}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1269759787
 MonoBehaviour:
@@ -1365,9 +1418,9 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
-  m_PreserveAspect: 0
+  m_Sprite: {fileID: 21300000, guid: 09ffce1b7ad37604d93b860b8deb0faf, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1
@@ -1425,7 +1478,7 @@ MonoBehaviour:
   currentPiece: {fileID: 11400000, guid: 95b3049964d5e1841af85fa2e08a6d69, type: 2}
   previewRoot: {fileID: 242973678}
   previewY: 0.02
-  previewPlayerAlpha: 0
+  previewPlayerAlpha: 1
 --- !u!4 &1522781778
 Transform:
   m_ObjectHideFlags: 0
@@ -1664,5 +1717,6 @@ SceneRoots:
   - {fileID: 610581097}
   - {fileID: 360753912}
   - {fileID: 1522781778}
-  - {fileID: 54753577}
+  - {fileID: 1192221432}
   - {fileID: 1885210751}
+  - {fileID: 54753577}

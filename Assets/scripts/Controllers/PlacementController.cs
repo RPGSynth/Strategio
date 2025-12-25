@@ -15,6 +15,7 @@ public class PlacementController : MonoBehaviour
     [Header("Player")]
     public TurnManager turn;
     public PlayersSettings players;
+    int placementCounter = 1;
 
     [Header("Current piece")]
     public PieceSettings currentPiece;
@@ -80,8 +81,9 @@ public class PlacementController : MonoBehaviour
         {
             int owner = (turn && turn.PlayerCount > 0) ? turn.CurrentPlayer : 0;
 
-            int id = state.Place(currentPiece, anchor, rot90, flip, owner, out var placedCells);
+            int id = state.Place(currentPiece, anchor, rot90, flip, owner, placementCounter, out var placedCells);
             if (id == -1) return;
+            placementCounter++;
 
             var go = new GameObject($"Piece_{id}_{currentPiece.name}");
             placedVisuals[id] = go;
