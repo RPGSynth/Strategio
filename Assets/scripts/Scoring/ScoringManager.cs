@@ -7,6 +7,8 @@ public class ScoringManager : MonoBehaviour
     public BoardState state;
     public BoardGrid grid;
     public PlayersSettings players;
+    public TurnManager turn;
+    public PlacementController placement;
 
     [Header("Runtime Overlay")]
     public bool autoEvaluateOnStart = false;
@@ -31,6 +33,7 @@ public class ScoringManager : MonoBehaviour
     MaterialPropertyBlock mpb;
     readonly List<GameObject> hiddenPieces = new();
     bool overlayActive = false;
+    bool overlayPendingAdvance = false;
 
     void Awake()
     {
@@ -47,20 +50,14 @@ public class ScoringManager : MonoBehaviour
     {
         if (Input.GetKeyDown(toggleOverlayKey))
         {
-            overlayActive = !overlayActive;
-            if (overlayActive)
-            {
-                EvaluateScores();
-                HidePieceViews();
-                BuildOverlayTiles(LastResult);
-                LogRanking(LastResult);
-            }
-            else
-            {
-                ShowPieceViews();
-                HideOverlayTiles();
-            }
+            ToggleOverlay();
         }
+    }
+
+    // Hook this to a UI button to reveal/hide the winning state. Consumes the held piece.
+    public void ToggleOverlayByButton()
+    {
+        ToggleOverlay();
     }
 
     public ScoreResult EvaluateScores()
@@ -270,6 +267,36 @@ public class ScoringManager : MonoBehaviour
         return result;
     }
 
+    void ToggleOverlay()
+    {
+        if (!overlayActive)
+        {
+            // Turning ON: require a held piece
+            if (!placement || !placement.HasPiece) return;
+
+            EvaluateScores();
+            HidePieceViews();
+            BuildOverlayTiles(LastResult);
+            LogRanking(LastResult);
+
+            overlayActive = true;
+            overlayPendingAdvance = true;
+            placement.ConsumeCurrentPiece();
+        }
+        else
+        {
+            // Turning OFF
+            overlayActive = false;
+            ShowPieceViews();
+            HideOverlayTiles();
+
+            if (overlayPendingAdvance && turn != null)
+                turn.NextTurn();
+
+            overlayPendingAdvance = false;
+        }
+    }
+
     void BuildOverlayTiles(ScoreResult res)
     {
         if (!grid || grid.settings == null || res.cellOwner == null) return;
@@ -373,6 +400,8 @@ public class ScoringManager : MonoBehaviour
             if (go) go.SetActive(true);
         hiddenPieces.Clear();
     }
+
+    public bool IsOverlayActive => overlayActive;
 
     void LogRanking(ScoreResult res)
     {

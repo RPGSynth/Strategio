@@ -7,6 +7,8 @@ public class ModeController : MonoBehaviour
     public PlacementController placement;      // your existing placement script
     public Renderer boardRenderer;             // Renderer of the board plane (the real playable surface)
     public Renderer paletteRenderer;           // Renderer of the palette plane
+    public ScoringManager scoring;
+    public GameObject paletteButton;           // optional: UI button to open palette
 
     [Header("Camera margins")]
     public float boardViewMargin = 0f;
@@ -20,6 +22,12 @@ public class ModeController : MonoBehaviour
 
     public void TogglePaletteMode()
     {
+        if (scoring && scoring.IsOverlayActive)
+        {
+            Debug.LogWarning("Cannot open palette while overlay is active.");
+            return;
+        }
+
         paletteMode = !paletteMode;
 
         if (paletteMode)
@@ -63,6 +71,10 @@ public class ModeController : MonoBehaviour
 
     void Update()
     {
+        // Hide palette button while overlay is active
+        if (paletteButton && scoring)
+            paletteButton.SetActive(!scoring.IsOverlayActive);
+
         if (!paletteMode) return;
 
         // Click on palette pieces to select them

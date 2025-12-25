@@ -15,6 +15,7 @@ public class PlacementController : MonoBehaviour
     [Header("Player")]
     public TurnManager turn;
     public PlayersSettings players;
+    public ScoringManager scoring;
     int placementCounter = 1;
 
     [Header("Current piece")]
@@ -34,8 +35,22 @@ public class PlacementController : MonoBehaviour
     static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
     static readonly int ColorId = Shader.PropertyToID("_Color");
 
+    void Start()
+    {
+        // Ensure no piece is held at game start; players must pick from palette.
+        ConsumeCurrentPiece();
+    }
+
+    public bool HasPiece => currentPiece != null;
+
     void Update()
     {
+        if (scoring && scoring.IsOverlayActive)
+        {
+            SetPreviewActive(false);
+            return;
+        }
+
         if (!board || !state || !currentPiece) return;
 
         // Rotate / flip controls (optional, but handy)
@@ -94,10 +109,11 @@ public class PlacementController : MonoBehaviour
             if (players) view.placedMat = players.GetPlacedMat(owner);
             view.Build(placedCells);
 
+            ConsumeCurrentPiece();
             if (turn) turn.NextTurn();
         }
 
-        if (Input.GetMouseButtonDown(1))
+        if (Input.GetMouseButtonDown(1) && HasPiece)
         {
             int pieceId = state.GetPieceIdAtCell(anchor);
             if (pieceId != -1)
@@ -109,6 +125,7 @@ public class PlacementController : MonoBehaviour
                         Destroy(go);
                         placedVisuals.Remove(pieceId);
                     }
+                    ConsumeCurrentPiece();
                     if (turn) turn.NextTurn();
                 }
             }
@@ -178,6 +195,14 @@ public class PlacementController : MonoBehaviour
     void SetPreviewActive(bool active)
     {
         if (previewRoot) previewRoot.gameObject.SetActive(active);
+    }
+
+    public void ConsumeCurrentPiece()
+    {
+        currentPiece = null;
+        rot90 = 0;
+        flip = false;
+        SetPreviewActive(false);
     }
 
     bool TryGetPlayerPreviewMaterial(out Material mat)
