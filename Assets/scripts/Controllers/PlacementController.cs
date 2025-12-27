@@ -10,7 +10,6 @@ public class PlacementController : MonoBehaviour
     [Header("Materials")]
     public Material previewValidMat;
     public Material previewInvalidMat;
-    public Material placedMat;
 
     [Header("Player")]
     public TurnManager turn;
@@ -25,6 +24,9 @@ public class PlacementController : MonoBehaviour
     public Transform previewRoot;     // empty object in scene
     public float previewY = 0.02f;
     [Range(0f, 1f)] public float previewPlayerAlpha = 0.25f;
+    [Header("Placed Pieces")]
+    public GameObject boardTilePrefab;
+    [Range(0.1f, 1f)] public float boardTileScale = 0.5f;
 
     int rot90 = 0;
     bool flip = false;
@@ -106,6 +108,8 @@ public class PlacementController : MonoBehaviour
             var view = go.AddComponent<PieceView>();
             view.board = board;
             view.y = previewY;
+            view.boardTilePrefab = boardTilePrefab;
+            view.boardTileScale = boardTileScale;
             if (players) view.placedMat = players.GetPlacedMat(owner);
             view.Build(placedCells);
 
@@ -146,7 +150,7 @@ public class PlacementController : MonoBehaviour
             if (!active) continue;
 
             previewTiles[i].position = board.CellToWorld(covered[i].x, covered[i].y, previewY);
-            previewTiles[i].localScale = new Vector3(s, s * 0.15f, s);
+            previewTiles[i].localScale = new Vector3(s * boardTileScale, s * 0.15f, s * boardTileScale);
 
             // simple feedback: higher/lower alpha look would require a material.
             // For now: move slightly higher if invalid
@@ -181,11 +185,11 @@ public class PlacementController : MonoBehaviour
     {
         while (previewTiles.Count < needed)
         {
-            var t = GameObject.CreatePrimitive(PrimitiveType.Cube).transform;
-            t.SetParent(previewRoot, worldPositionStays: true);
+            Transform t = boardTilePrefab ? Instantiate(boardTilePrefab, previewRoot, worldPositionStays: true).transform
+                                          : GameObject.CreatePrimitive(PrimitiveType.Cube).transform;
+            if (!boardTilePrefab) t.SetParent(previewRoot, worldPositionStays: true);
 
             var col = t.GetComponent<Collider>();
-            var r = t.GetComponent<Renderer>();
             if (col) Destroy(col);
 
             previewTiles.Add(t);
@@ -224,24 +228,27 @@ public class PlacementController : MonoBehaviour
         previewBlock ??= new MaterialPropertyBlock();
         previewBlock.Clear();
 
-        if (mat.HasProperty(BaseColorId))
-        {
-            Color c = mat.GetColor(BaseColorId);
-            c.a = previewPlayerAlpha;
-            previewBlock.SetColor(BaseColorId, c);
-            r.SetPropertyBlock(previewBlock);
-            return;
-        }
+        bool applied = false;
 
         if (mat.HasProperty(ColorId))
         {
             Color c = mat.GetColor(ColorId);
             c.a = previewPlayerAlpha;
             previewBlock.SetColor(ColorId, c);
-            r.SetPropertyBlock(previewBlock);
-            return;
+            applied = true;
         }
 
-        r.SetPropertyBlock(null);
+        if (mat.HasProperty(BaseColorId))
+        {
+            Color c = mat.GetColor(BaseColorId);
+            c.a = previewPlayerAlpha;
+            previewBlock.SetColor(BaseColorId, c);
+            applied = true;
+        }
+
+        if (applied)
+            r.SetPropertyBlock(previewBlock);
+        else
+            r.SetPropertyBlock(null);
     }
 }

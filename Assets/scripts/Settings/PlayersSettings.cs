@@ -9,8 +9,6 @@ public class PlayersSettings : ScriptableObject
     public class Player
     {
         public string name = "Player";
-        [HideInInspector] public Material placedMaterial;
-        [HideInInspector] public Color uiColor = Color.white;
     }
 
     public List<Player> players = new List<Player>
@@ -95,8 +93,10 @@ public class PlayersSettings : ScriptableObject
     {
         if (!mat) return fallback;
 
-        if (mat.HasProperty("_BaseColor")) return mat.GetColor("_BaseColor");
+        // Prefer gradient stops when present (new Shader Graph keeps _BaseColor white), then common tint slots.
+        if (mat.HasProperty("_ColorA")) return mat.GetColor("_ColorA");
         if (mat.HasProperty("_Color")) return mat.GetColor("_Color");
+        if (mat.HasProperty("_BaseColor")) return mat.GetColor("_BaseColor");
         return fallback;
     }
 

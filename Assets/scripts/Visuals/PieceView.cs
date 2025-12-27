@@ -5,7 +5,8 @@ public class PieceView : MonoBehaviour
 {
 
     public Material placedMat;
-
+    public GameObject boardTilePrefab;
+    [Range(0.1f, 1f)] public float boardTileScale = 0.5f;
     public BoardGrid board;
     public float y = 0.02f;          // height above board
     public float tilePadding = 0.92f; // 0.92 leaves a small gap between tiles
@@ -22,9 +23,11 @@ public class PieceView : MonoBehaviour
 
         foreach (var c in coveredCells)
         {
-            var t = GameObject.CreatePrimitive(PrimitiveType.Cube).transform;
+            Transform t = boardTilePrefab ? Instantiate(boardTilePrefab).transform
+                                           : GameObject.CreatePrimitive(PrimitiveType.Cube).transform;
+
             t.SetParent(transform, worldPositionStays: false);
-            t.localScale = new Vector3(s, s * 0.2f, s);
+            t.localScale = new Vector3(s * boardTileScale, s * 0.2f, s * boardTileScale);
             t.position = board.CellToWorld(c.x, c.y, y);
 
             // Remove collider so raycasts hit board, not pieces (optional)
@@ -44,4 +47,5 @@ public class PieceView : MonoBehaviour
             if (tiles[i]) Destroy(tiles[i].gameObject);
         tiles.Clear();
     }
+
 }

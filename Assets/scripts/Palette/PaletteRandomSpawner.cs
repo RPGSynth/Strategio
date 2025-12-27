@@ -19,6 +19,7 @@ public class PaletteRandomSpawner : MonoBehaviour
     public Transform paletteRoot;         // Parent for spawned palette pieces
     public BoardGrid boardGrid;           // Use board cell size for perfect match
     public Material paletteDefaultMat;    // Neutral material for palette pieces
+    public GameObject paletteTilePrefab;  // Optional custom tile mesh/prefab
 
     [Header("Pick Layer")]
     public string paletteLayerName = "Palette"; // spawned roots will be forced to this layer
@@ -40,6 +41,9 @@ public class PaletteRandomSpawner : MonoBehaviour
 
     [Tooltip("Empty CELL gap between pieces (grid aligned).")]
     [Min(0)] public int gapCells = 1;
+    [Header("Tile Visuals")]
+    [Tooltip("Scale factor applied to each tile mesh relative to cell size (was 0.92).")]
+    [Range(0.1f, 1f)] public float tileScale = 0.5f;
 
     [Header("Auto Resize Palette (square)")]
     public bool autoResizePalette = true;
@@ -162,34 +166,15 @@ public class PaletteRandomSpawner : MonoBehaviour
                   $"PaletteSize={paletteRenderer.bounds.size} cell={cell:F3} maxCols={maxCols} maxRows={maxRows}");
     }
 
-    // --- Weighted size distribution ---
-    // Size=lo most common, Size=hi about rarityMaxFactor times rarer.
+    // --- Uniform size distribution ---
+    // All sizes between minCells and maxCells are equally likely.
     int PickSizeWeighted(System.Random rng)
     {
         int lo = Mathf.Max(1, minCells);
         int hi = Mathf.Max(lo, maxCells);
         if (lo == hi) return lo;
 
-        float total = 0f;
-        float[] w = new float[hi - lo + 1];
-
-        for (int s = lo; s <= hi; s++)
-        {
-            float t = (s - lo) / (float)(hi - lo); // 0..1
-            float weight = Mathf.Lerp(1f, 1f / Mathf.Max(1.001f, rarityMaxFactor), t);
-            w[s - lo] = weight;
-            total += weight;
-        }
-
-        double r = rng.NextDouble() * total;
-        float acc = 0f;
-
-        for (int i = 0; i < w.Length; i++)
-        {
-            acc += w[i];
-            if (r <= acc) return lo + i;
-        }
-        return hi;
+        return rng.Next(lo, hi + 1); // inclusive uniform
     }
 
     // --- Auto resize palette to keep it square and roomy ---
@@ -226,21 +211,27 @@ public class PaletteRandomSpawner : MonoBehaviour
     {
         var root = new GameObject("PalettePolyomino");
         root.transform.SetParent(paletteRoot, worldPositionStays: true);
-
-        // Build tiles and compute bounds for root collider
-        Bounds? bb = null;
         float y = paletteRenderer.bounds.max.y + yOffset;
+        root.transform.position = new Vector3(anchorX, y, anchorZ);
+        // Small random yaw so palette pieces don’t look perfectly axis-aligned
+        float yaw = UnityEngine.Random.Range(-15f, 15f);
+        root.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
 
+        // Build tiles and compute bounds in local space
+        Bounds? bb = null;
         foreach (var o in offsets)
         {
-            float wx = anchorX + (o.x + 0.5f) * cell;
-            float wz = anchorZ + (o.y + 0.5f) * cell;
-
-            var tile = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            GameObject tile;
+            if (paletteTilePrefab)
+                tile = Instantiate(paletteTilePrefab);
+            else
+                tile = GameObject.CreatePrimitive(PrimitiveType.Cube);
             tile.name = "Tile";
-            tile.transform.SetParent(root.transform, worldPositionStays: true);
-            tile.transform.position = new Vector3(wx, y, wz);
-            tile.transform.localScale = new Vector3(cell * 0.92f, cell * 0.2f, cell * 0.92f);
+            tile.transform.SetParent(root.transform, worldPositionStays: false);
+
+            Vector3 localPos = new Vector3((o.x + 0.5f) * cell, 0f, (o.y + 0.5f) * cell);
+            tile.transform.localPosition = localPos;
+            tile.transform.localScale = new Vector3(cell * tileScale, cell * 0.2f, cell * tileScale);
 
             var r = tile.GetComponent<Renderer>();
             if (r && paletteDefaultMat) r.sharedMaterial = paletteDefaultMat;
@@ -249,8 +240,9 @@ public class PaletteRandomSpawner : MonoBehaviour
             var c = tile.GetComponent<Collider>();
             if (c) Destroy(c);
 
-            var trb = new Bounds(tile.transform.position, tile.transform.localScale);
+            var trb = new Bounds(tile.transform.localPosition, tile.transform.localScale);
             bb = bb.HasValue ? Encapsulate(bb.Value, trb) : trb;
+
         }
 
         // One collider for easy clicking
@@ -258,7 +250,7 @@ public class PaletteRandomSpawner : MonoBehaviour
         if (bb.HasValue)
         {
             var bounds = bb.Value;
-            col.center = root.transform.InverseTransformPoint(bounds.center);
+            col.center = bounds.center;
             col.size = bounds.size + new Vector3(0f, 0.3f, 0f);
         }
 
@@ -303,4 +295,5 @@ public class PaletteRandomSpawner : MonoBehaviour
         foreach (Transform t in go.transform)
             SetLayerRecursively(t.gameObject, layer);
     }
+
 }

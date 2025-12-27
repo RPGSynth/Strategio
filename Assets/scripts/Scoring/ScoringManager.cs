@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class ScoringManager : MonoBehaviour
 {
@@ -10,13 +11,17 @@ public class ScoringManager : MonoBehaviour
     public TurnManager turn;
     public PlacementController placement;
 
-    [Header("Runtime Overlay")]
+    [Header("Territory View (Overlay)")]
     public bool autoEvaluateOnStart = false;
-    public KeyCode toggleOverlayKey = KeyCode.F8;
-    public Material overlayMaterial; // should be transparent; if null, default cube material is used
-    [Range(0f, 1f)] public float overlayAlphaFree = 0.25f;
-    [Range(0f, 1f)] public float overlayAlphaCaptured = 0.5f;
-    public float overlayY = 0.02f;
+    [FormerlySerializedAs("toggleOverlayKey")] public KeyCode toggleTerritoryKey = KeyCode.F8;
+    [FormerlySerializedAs("overlayTilePrefab")] public GameObject territoryTilePrefab;
+    [FormerlySerializedAs("overlayTileScale"), Range(0.1f, 3f)] public float territoryTileScale = 1f;
+    [FormerlySerializedAs("overlayY")] public float territoryY = 0.02f;
+    [Range(0f, 1f)] public float territoryCapturedAlpha = 0.5f;
+    [Header("Debug")]
+    [Tooltip("Enable detailed logs for territory overlay material/color application.")]
+    public bool debugOverlayLogs = false;
+    [Range(1, 64)] public int debugOverlayTileLimit = 12;
 
     public ScoreResult LastResult { get; private set; }
 
@@ -28,12 +33,20 @@ public class ScoringManager : MonoBehaviour
         new Vector2Int( 0,-1),
     };
 
-    Transform overlayRoot;
-    readonly List<Renderer> overlayTiles = new();
+    Transform territoryRoot;
+    readonly List<Renderer> territoryTiles = new();
     MaterialPropertyBlock mpb;
+    static Material fallbackTerritoryMat;
     readonly List<GameObject> hiddenPieces = new();
-    bool overlayActive = false;
-    bool overlayPendingAdvance = false;
+    bool territoryActive = false;
+    bool territoryPendingAdvance = false;
+
+    const float PieceTilePadding = 0.92f;   // matches PieceView default padding
+    const float PieceHeightFactor = 0.2f;   // matches PieceView height factor
+    static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+    static readonly int ColorId = Shader.PropertyToID("_Color");
+    static readonly int ColorAId = Shader.PropertyToID("_ColorA");
+    static readonly int ColorBId = Shader.PropertyToID("_ColorB");
 
     void Awake()
     {
@@ -48,16 +61,29 @@ public class ScoringManager : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(toggleOverlayKey))
+        if (Input.GetKeyDown(toggleTerritoryKey))
         {
-            ToggleOverlay();
+            // Debug key: allow unconditional view (without consuming piece/turn)
+            if (!territoryActive)
+            {
+                EvaluateScores();
+                HidePieceViews();
+                BuildTerritoryTiles(LastResult);
+            }
+            else
+            {
+                ShowPieceViews();
+                HideTerritoryTiles();
+            }
+            territoryActive = !territoryActive;
+            territoryPendingAdvance = false;
         }
     }
 
     // Hook this to a UI button to reveal/hide the winning state. Consumes the held piece.
-    public void ToggleOverlayByButton()
+    public void ToggleTerritoryByButton()
     {
-        ToggleOverlay();
+        ToggleTerritory();
     }
 
     public ScoreResult EvaluateScores()
@@ -260,6 +286,7 @@ public class ScoringManager : MonoBehaviour
                 {
                     result.playerScores[bestOwner] += 1;
                     result.cellOwner[c.x, c.y] = bestOwner;
+                    result.enclosedMask[c.x, c.y] = true;
                 }
             }
         }
@@ -267,46 +294,47 @@ public class ScoringManager : MonoBehaviour
         return result;
     }
 
-    void ToggleOverlay()
+    void ToggleTerritory()
     {
-        if (!overlayActive)
+        if (!territoryActive)
         {
             // Turning ON: require a held piece
             if (!placement || !placement.HasPiece) return;
 
             EvaluateScores();
             HidePieceViews();
-            BuildOverlayTiles(LastResult);
+            BuildTerritoryTiles(LastResult);
             LogRanking(LastResult);
 
-            overlayActive = true;
-            overlayPendingAdvance = true;
+            territoryActive = true;
+            territoryPendingAdvance = true;
             placement.ConsumeCurrentPiece();
         }
         else
         {
             // Turning OFF
-            overlayActive = false;
+            territoryActive = false;
             ShowPieceViews();
-            HideOverlayTiles();
+            HideTerritoryTiles();
 
-            if (overlayPendingAdvance && turn != null)
+            if (territoryPendingAdvance && turn != null)
                 turn.NextTurn();
 
-            overlayPendingAdvance = false;
+            territoryPendingAdvance = false;
         }
     }
 
-    void BuildOverlayTiles(ScoreResult res)
+    void BuildTerritoryTiles(ScoreResult res)
     {
         if (!grid || grid.settings == null || res.cellOwner == null) return;
 
         int n = grid.settings.N;
-        float s = grid.cellSize * 0.98f;
+        // Match board piece visuals; compute same scale as PieceView (uses padding 0.92 and height factor 0.2).
+        int logRemaining = debugOverlayLogs ? debugOverlayTileLimit : 0;
 
-        EnsureOverlayRoot();
+        EnsureTerritoryRoot();
         int needed = CountActiveCells(res);
-        EnsureOverlayTiles(needed);
+        EnsureTerritoryTiles(needed);
 
         int idx = 0;
         for (int x = 0; x < n; x++)
@@ -315,28 +343,33 @@ public class ScoringManager : MonoBehaviour
                 int owner = res.cellOwner[x, y];
                 if (owner < 0) continue;
 
+                var rend = territoryTiles[idx];
+                // Use the owner's placed material so the overlay matches board visuals.
+                rend.sharedMaterial = GetOverlayMaterialForOwner(owner, rend.sharedMaterial);
+
+                rend.transform.position = grid.CellToWorld(x, y, territoryY);
+                float s = grid.cellSize * PieceTilePadding;
+                float pieceScale = placement ? placement.boardTileScale : 1f;
+                Vector3 baseScale = new Vector3(s * pieceScale, s * PieceHeightFactor * pieceScale, s * pieceScale);
+                rend.transform.localScale = baseScale * territoryTileScale;
                 bool captured = res.enclosedMask[x, y];
-                Color c = players ? players.GetUIColor(owner, Color.white) : Color.white;
-                c.a = captured ? overlayAlphaCaptured : overlayAlphaFree;
+                float alpha = captured ? territoryCapturedAlpha : 1f;
+                ApplyOverlayPropertyBlock(rend, alpha);
 
-                var rend = overlayTiles[idx];
-                rend.transform.position = grid.CellToWorld(x, y, overlayY);
-                rend.transform.localScale = new Vector3(s, s * 0.05f, s);
-
-                mpb.Clear();
-                if (rend.sharedMaterial && rend.sharedMaterial.HasProperty("_BaseColor"))
-                    mpb.SetColor("_BaseColor", c);
-                else if (rend.sharedMaterial && rend.sharedMaterial.HasProperty("_Color"))
-                    mpb.SetColor("_Color", c);
-                rend.SetPropertyBlock(mpb);
+                if (debugOverlayLogs && logRemaining >= 0)
+                {
+                    var mat = rend ? rend.sharedMaterial : null;
+                    string matName = mat ? mat.name : "null";
+                    Debug.Log($"[Overlay] Tile idx={idx} cell=({x},{y}) owner={owner} mat={matName} rq={(mat ? mat.renderQueue : -1)}");
+                }
 
                 rend.gameObject.SetActive(true);
                 idx++;
             }
 
         // deactivate unused tiles
-        for (int i = idx; i < overlayTiles.Count; i++)
-            overlayTiles[i].gameObject.SetActive(false);
+        for (int i = idx; i < territoryTiles.Count; i++)
+            territoryTiles[i].gameObject.SetActive(false);
     }
 
     int CountActiveCells(ScoreResult res)
@@ -349,36 +382,42 @@ public class ScoringManager : MonoBehaviour
         return count;
     }
 
-    void EnsureOverlayRoot()
+    void EnsureTerritoryRoot()
     {
-        if (overlayRoot != null) return;
+        if (territoryRoot != null) return;
         var go = new GameObject("ScoreOverlay");
-        overlayRoot = go.transform;
-        overlayRoot.SetParent(transform, worldPositionStays: true);
+        territoryRoot = go.transform;
+        territoryRoot.SetParent(transform, worldPositionStays: true);
     }
 
-    void EnsureOverlayTiles(int needed)
+    void EnsureTerritoryTiles(int needed)
     {
-        while (overlayTiles.Count < needed)
+        while (territoryTiles.Count < needed)
         {
-            var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            go.name = $"OverlayTile_{overlayTiles.Count}";
-            go.transform.SetParent(overlayRoot, worldPositionStays: true);
+            GameObject prefab = territoryTilePrefab ? territoryTilePrefab : placement ? placement.boardTilePrefab : null;
+            GameObject go = prefab ? Instantiate(prefab) : GameObject.CreatePrimitive(PrimitiveType.Cube);
+            go.transform.SetParent(territoryRoot, worldPositionStays: false);
+            go.name = $"OverlayTile_{territoryTiles.Count}";
 
             var col = go.GetComponent<Collider>();
             if (col) Destroy(col);
 
             var rend = go.GetComponent<Renderer>();
-            if (overlayMaterial) rend.sharedMaterial = overlayMaterial;
+            // Start with a valid material from the prefab/board; avoid custom-created fallbacks.
+            if (!rend.sharedMaterial)
+            {
+                var srcMat = GetOverlayMaterialForOwner(-1, null);
+                if (srcMat) rend.sharedMaterial = srcMat;
+            }
 
             go.SetActive(false);
-            overlayTiles.Add(rend);
+            territoryTiles.Add(rend);
         }
     }
 
-    void HideOverlayTiles()
+    void HideTerritoryTiles()
     {
-        foreach (var r in overlayTiles)
+        foreach (var r in territoryTiles)
             if (r) r.gameObject.SetActive(false);
     }
 
@@ -401,7 +440,29 @@ public class ScoringManager : MonoBehaviour
         hiddenPieces.Clear();
     }
 
-    public bool IsOverlayActive => overlayActive;
+    public bool IsOverlayActive => territoryActive;
+
+    Material GetOverlayMaterialForOwner(int ownerIndex, Material fallbackSource)
+    {
+        Material source = null;
+        if (players && ownerIndex >= 0 && ownerIndex < players.Count)
+            source = players.GetPlacedMat(ownerIndex);
+
+        if (!source) source = fallbackSource;
+        if (!source && placement && placement.boardTilePrefab)
+        {
+            var r = placement.boardTilePrefab.GetComponent<Renderer>();
+            if (r) source = r.sharedMaterial;
+        }
+        if (!source && territoryTilePrefab)
+        {
+            var r = territoryTilePrefab.GetComponent<Renderer>();
+            if (r) source = r.sharedMaterial;
+        }
+
+        // Do not change blend state: use the exact player material so visuals match board mode.
+        return source;
+    }
 
     void LogRanking(ScoreResult res)
     {
@@ -426,6 +487,63 @@ public class ScoringManager : MonoBehaviour
             sb.Append($"{i + 1}) {name}: {list[i].score}");
         }
         Debug.Log(sb.ToString());
+    }
+
+    void ApplyOverlayPropertyBlock(Renderer rend, float alpha)
+    {
+        if (!rend)
+            return;
+
+        mpb.Clear();
+        var mat = rend.sharedMaterial;
+        bool applied = false;
+
+        // If the shader exposes gradient endpoints, flatten them to match the board base hue and set alpha.
+        if (mat && mat.HasProperty(ColorAId) && mat.HasProperty(ColorBId))
+        {
+            // Flatten by using B as the canonical color: ColorA = ColorB in overlay.
+            Color b = mat.GetColor(ColorBId);
+            b.a = alpha;
+            mpb.SetColor(ColorAId, b);
+            mpb.SetColor(ColorBId, b);
+            applied = true;
+        }
+        else if (mat && mat.HasProperty(ColorBId))
+        {
+            Color b = mat.GetColor(ColorBId);
+            b.a = alpha;
+            mpb.SetColor(ColorBId, b);
+            applied = true;
+        }
+        else if (mat && mat.HasProperty(ColorAId))
+        {
+            Color a = mat.GetColor(ColorAId);
+            a.a = alpha;
+            mpb.SetColor(ColorAId, a);
+            applied = true;
+        }
+
+        // Also set common tint slots' alpha so transparency is respected.
+        if (mat && mat.HasProperty(ColorId))
+        {
+            Color c = mat.GetColor(ColorId);
+            c.a = alpha;
+            mpb.SetColor(ColorId, c);
+            applied = true;
+        }
+
+        if (mat && mat.HasProperty(BaseColorId))
+        {
+            Color c = mat.GetColor(BaseColorId);
+            c.a = alpha;
+            mpb.SetColor(BaseColorId, c);
+            applied = true;
+        }
+
+        if (applied)
+            rend.SetPropertyBlock(mpb);
+        else
+            rend.SetPropertyBlock(null);
     }
 }
 

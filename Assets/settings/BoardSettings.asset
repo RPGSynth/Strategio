@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3c22f5c8238a1d84daadab18ed58b359, type: 3}
   m_Name: BoardSettings
   m_EditorClassIdentifier: 
-  N: 29
+  N: 19
   marginPercent: 0.08
   targetPixelsPerCell: 128
-  lineWidthPx: 10
+  lineWidthPx: 6
   gridFilterMode: 0
