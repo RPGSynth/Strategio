@@ -70,7 +70,7 @@ Material:
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
-    - _GradientOffset: 0
+    - _GradientOffset: 0.45
     - _GradientScale: 1
     - _Metallic: 0.2
     - _Mode: 3
@@ -85,7 +85,7 @@ Material:
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 0.9960785, g: 0.40000004, b: 0.5803922, a: 1}
-    - _ColorA: {r: 0.85098046, g: 0.15686275, b: 0.3647059, a: 1}
+    - _ColorA: {r: 0.8679245, g: 0.16785331, b: 0.5264704, a: 1}
     - _ColorB: {r: 0.9921569, g: 0.43529415, b: 0.6039216, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _GradientDir: {r: 1, g: -1, b: 0, a: 0}

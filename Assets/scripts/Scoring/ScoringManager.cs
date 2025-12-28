@@ -284,8 +284,22 @@ public class ScoringManager : MonoBehaviour
 
                 foreach (var c in cells)
                 {
-                    result.playerScores[bestOwner] += 1;
-                    result.cellOwner[c.x, c.y] = bestOwner;
+                    // If this is an empty cell, award it to the boundary owner.
+                    // If this is a piece cell, it is captured (removed from original owner) but not awarded to the captor.
+                    if (!result.isPieceCell[c.x, c.y])
+                    {
+                        result.playerScores[bestOwner] += 1;
+                        result.cellOwner[c.x, c.y] = bestOwner;
+                    }
+                    else
+                    {
+                        // Preserve original owner color for overlay, but no score for anyone.
+                        if (state.TryGetOwner(occ[c.x, c.y], out int pieceOwner))
+                            result.cellOwner[c.x, c.y] = Mathf.Clamp(pieceOwner, 0, playerCount - 1);
+                        else
+                            result.cellOwner[c.x, c.y] = -1;
+                    }
+
                     result.enclosedMask[c.x, c.y] = true;
                 }
             }
@@ -335,6 +349,9 @@ public class ScoringManager : MonoBehaviour
         EnsureTerritoryRoot();
         int needed = CountActiveCells(res);
         EnsureTerritoryTiles(needed);
+
+        // Log ranking in territory mode so we can see who is leading.
+        LogRanking(res);
 
         int idx = 0;
         for (int x = 0; x < n; x++)

@@ -521,7 +521,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 9e20edae4efa7374cb7c4bff11b46870, type: 2}
+  - {fileID: -876546973899608171, guid: 75ba7e81940648441a739885617f7afd, type: 3}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -566,7 +566,7 @@ MonoBehaviour:
   settings: {fileID: 11400000, guid: 3e08c9b91414e4249a6da71e81f272b0, type: 2}
   boardWorldSize: {x: 10, y: 10}
   playableWorldSize: {x: 8.400001, y: 8.400001}
-  cellSize: 0.4421053
+  cellSize: 0.33600003
 --- !u!1 &149166779
 GameObject:
   m_ObjectHideFlags: 0
@@ -1637,7 +1637,7 @@ MonoBehaviour:
   territoryTileScale: 1
   territoryY: 0.25
   territoryCapturedAlpha: 0.5
-  debugOverlayLogs: 1
+  debugOverlayLogs: 0
   debugOverlayTileLimit: 12
 --- !u!4 &1192221432
 Transform:
@@ -2161,7 +2161,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 9e20edae4efa7374cb7c4bff11b46870, type: 2}
+  - {fileID: -876546973899608171, guid: 75ba7e81940648441a739885617f7afd, type: 3}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
