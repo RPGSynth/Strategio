@@ -33,9 +33,18 @@ public class PlacementController : MonoBehaviour
 
     readonly Dictionary<int, GameObject> placedVisuals = new();
     readonly List<Transform> previewTiles = new();
+    PlacementRecord? lastPlacement;
+    PalettePiece heldPalettePiece;
     MaterialPropertyBlock previewBlock;
     static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
     static readonly int ColorId = Shader.PropertyToID("_Color");
+
+    struct PlacementRecord
+    {
+        public int pieceId;
+        public PieceSettings piece;
+        public int owner;
+    }
 
     void Start()
     {
@@ -113,6 +122,13 @@ public class PlacementController : MonoBehaviour
             if (players) view.placedMat = players.GetPlacedMat(owner);
             view.Build(placedCells);
 
+            lastPlacement = new PlacementRecord
+            {
+                pieceId = id,
+                piece = currentPiece,
+                owner = owner
+            };
+
             ConsumeCurrentPiece();
             if (turn) turn.NextTurn();
         }
@@ -122,16 +138,18 @@ public class PlacementController : MonoBehaviour
             int pieceId = state.GetPieceIdAtCell(anchor);
             if (pieceId != -1)
             {
-                if (state.Remove(pieceId))
+            if (state.Remove(pieceId))
+            {
+                if (placedVisuals.TryGetValue(pieceId, out var go))
                 {
-                    if (placedVisuals.TryGetValue(pieceId, out var go))
-                    {
-                        Destroy(go);
-                        placedVisuals.Remove(pieceId);
-                    }
-                    ConsumeCurrentPiece();
-                    if (turn) turn.NextTurn();
+                    Destroy(go);
+                    placedVisuals.Remove(pieceId);
                 }
+                if (lastPlacement.HasValue && lastPlacement.Value.pieceId == pieceId)
+                    lastPlacement = null;
+                ConsumeCurrentPiece();
+                if (turn) turn.NextTurn();
+            }
             }
         }
     }
@@ -203,10 +221,64 @@ public class PlacementController : MonoBehaviour
 
     public void ConsumeCurrentPiece()
     {
+        if (heldPalettePiece)
+        {
+            Destroy(heldPalettePiece.gameObject);
+            heldPalettePiece = null;
+        }
         currentPiece = null;
         rot90 = 0;
         flip = false;
         SetPreviewActive(false);
+    }
+
+    public void SetCurrentPieceFromPalette(PalettePiece palettePiece)
+    {
+        if (!palettePiece || palettePiece.piece == null) return;
+
+        // Restore previously hidden palette piece if it wasn't consumed.
+        if (heldPalettePiece && heldPalettePiece != palettePiece)
+            heldPalettePiece.gameObject.SetActive(true);
+
+        heldPalettePiece = palettePiece;
+        heldPalettePiece.gameObject.SetActive(false);
+
+        currentPiece = palettePiece.piece;
+        rot90 = 0;
+        flip = false;
+        SetPreviewActive(false);
+    }
+
+    // Hook this to an Undo UI button: removes the last placed piece and returns it to the player.
+    public void UndoLastPlacement()
+    {
+        if (!state || currentPiece != null || !lastPlacement.HasValue) return;
+
+        var rec = lastPlacement.Value;
+        if (!state.Remove(rec.pieceId)) return;
+
+        if (placedVisuals.TryGetValue(rec.pieceId, out var go))
+        {
+            Destroy(go);
+            placedVisuals.Remove(rec.pieceId);
+        }
+
+        currentPiece = rec.piece;
+        rot90 = 0;
+        flip = false;
+        SetPreviewActive(false);
+        lastPlacement = null;
+
+        if (turn)
+        {
+            turn.currentPlayerIndex = rec.owner;
+            Debug.Log($"Turn: {turn.players.GetName(turn.CurrentPlayer)} (#{turn.CurrentPlayer})");
+        }
+    }
+
+    public void UndoLastPlacementByButton()
+    {
+        UndoLastPlacement();
     }
 
     bool TryGetPlayerPreviewMaterial(out Material mat)
@@ -251,4 +323,6 @@ public class PlacementController : MonoBehaviour
         else
             r.SetPropertyBlock(null);
     }
+
+    // lastPlacement only tracks the most recent placement; no multi-step undo.
 }

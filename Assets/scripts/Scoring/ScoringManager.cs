@@ -69,6 +69,8 @@ public class ScoringManager : MonoBehaviour
                 EvaluateScores();
                 HidePieceViews();
                 BuildTerritoryTiles(LastResult);
+                if (LastResult.playerScores != null)
+                    LogScoresToConsole(LastResult);
             }
             else
             {
@@ -285,7 +287,7 @@ public class ScoringManager : MonoBehaviour
                 foreach (var c in cells)
                 {
                     // If this is an empty cell, award it to the boundary owner.
-                    // If this is a piece cell, it is captured (removed from original owner) but not awarded to the captor.
+                    // If this is a piece cell: remove from the original owner's score; award only if the captor already owns it.
                     if (!result.isPieceCell[c.x, c.y])
                     {
                         result.playerScores[bestOwner] += 1;
@@ -293,11 +295,21 @@ public class ScoringManager : MonoBehaviour
                     }
                     else
                     {
-                        // Preserve original owner color for overlay, but no score for anyone.
-                        if (state.TryGetOwner(occ[c.x, c.y], out int pieceOwner))
-                            result.cellOwner[c.x, c.y] = Mathf.Clamp(pieceOwner, 0, playerCount - 1);
+                        int pieceOwner = -1;
+                        if (state.TryGetOwner(occ[c.x, c.y], out int po))
+                            pieceOwner = Mathf.Clamp(po, 0, playerCount - 1);
+
+                        if (pieceOwner == bestOwner && pieceOwner >= 0)
+                        {
+                            // Captor owns the piece: keep the point.
+                            result.playerScores[bestOwner] += 1;
+                            result.cellOwner[c.x, c.y] = bestOwner;
+                        }
                         else
-                            result.cellOwner[c.x, c.y] = -1;
+                        {
+                            // Captured from someone else: no one scores; keep original for overlay color.
+                            result.cellOwner[c.x, c.y] = pieceOwner;
+                        }
                     }
 
                     result.enclosedMask[c.x, c.y] = true;
@@ -504,6 +516,19 @@ public class ScoringManager : MonoBehaviour
             sb.Append($"{i + 1}) {name}: {list[i].score}");
         }
         Debug.Log(sb.ToString());
+    }
+
+    void LogScoresToConsole(ScoreResult res)
+    {
+        if (res.playerScores == null || players == null) return;
+        System.Text.StringBuilder sb = new System.Text.StringBuilder();
+        sb.Append("[Scores] ");
+        for (int i = 0; i < res.playerScores.Length; i++)
+        {
+            if (i > 0) sb.Append(" | ");
+            sb.Append($"{players.GetName(i)}={res.playerScores[i]}");
+        }
+        Debug.LogError(sb.ToString());
     }
 
     void ApplyOverlayPropertyBlock(Renderer rend, float alpha)

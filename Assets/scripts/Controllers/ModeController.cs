@@ -84,18 +84,17 @@ public class ModeController : MonoBehaviour
             if (!cam) return;
 
             Ray ray = cam.ScreenPointToRay(Input.mousePosition);
-            if (Physics.Raycast(ray, out RaycastHit hit, 500f, palettePickMask))
-            {
-                var pp = hit.collider.GetComponentInParent<PalettePiece>();
-                if (pp && pp.piece && placement)
+                if (Physics.Raycast(ray, out RaycastHit hit, 500f, palettePickMask))
                 {
-                    placement.currentPiece = pp.piece;
-                    Destroy(pp.gameObject);
+                    var pp = hit.collider.GetComponentInParent<PalettePiece>();
+                    if (pp && pp.piece && placement)
+                    {
+                        placement.SetCurrentPieceFromPalette(pp);
 
-                    if (autoCloseOnPick)
-                        TogglePaletteMode();
+                        if (autoCloseOnPick)
+                            TogglePaletteMode();
+                    }
                 }
-            }
         }
 
     }
