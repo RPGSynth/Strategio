@@ -18,6 +18,7 @@ public class TopDownCameraController : MonoBehaviour
     public float minOrthoSize = 1.5f;
     // public float maxOrthoSize = 30f;
     public float voidMargin = 5.0f;
+    public float resetViewMargin = 0f;      // margin used when resetting view
 
     [Header("Keys")]
      KeyCode resetKey = KeyCode.R;
@@ -64,8 +65,17 @@ public class TopDownCameraController : MonoBehaviour
         // Reset
         if (Input.GetKeyDown(resetKey))
         {
-            targetPos = defaultPos;
-            targetOrtho = defaultOrtho;
+            var rend = GetClampRenderer();
+            if (rend)
+            {
+                float fit = ComputeFitOrthoForRenderer(rend, resetViewMargin);
+                SetTargetView(rend.bounds.center, fit);
+            }
+            else
+            {
+                targetPos = defaultPos;
+                targetOrtho = defaultOrtho;
+            }
         }
 
         // Pan (zenithal: move in XZ)
@@ -140,7 +150,8 @@ public class TopDownCameraController : MonoBehaviour
         float maxByHeight = (boardH * 0.5f) + voidMargin;
         float maxByWidth  = (boardW * 0.5f + voidMargin) / cam.aspect;
 
-        float computed = Mathf.Min(maxByHeight, maxByWidth);
+        // Use the larger requirement so rectangular boards fit within the view.
+        float computed = Mathf.Max(maxByHeight, maxByWidth);
 
         return Mathf.Max(computed, minOrthoSize);
     }
@@ -170,7 +181,8 @@ public class TopDownCameraController : MonoBehaviour
         float halfH = (boardH * 0.5f) + marginWorld;
         float halfW = ((boardW * 0.5f) + marginWorld) / cam.aspect;
 
-        return Mathf.Max(Mathf.Min(halfH, halfW), minOrthoSize);
+        // Use the larger requirement so both axes fit (handles rectangular boards + screen aspect).
+        return Mathf.Max(Mathf.Max(halfH, halfW), minOrthoSize);
     }
 
 

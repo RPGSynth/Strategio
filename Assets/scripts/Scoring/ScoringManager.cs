@@ -36,7 +36,6 @@ public class ScoringManager : MonoBehaviour
     Transform territoryRoot;
     readonly List<Renderer> territoryTiles = new();
     MaterialPropertyBlock mpb;
-    static Material fallbackTerritoryMat;
     readonly List<GameObject> hiddenPieces = new();
     bool territoryActive = false;
     bool territoryPendingAdvance = false;
@@ -330,7 +329,6 @@ public class ScoringManager : MonoBehaviour
             EvaluateScores();
             HidePieceViews();
             BuildTerritoryTiles(LastResult);
-            LogRanking(LastResult);
 
             territoryActive = true;
             territoryPendingAdvance = true;

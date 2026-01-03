@@ -13,15 +13,30 @@ public class TurnIndicatorUI : MonoBehaviour
         if (!turn) turn = FindObjectOfType<TurnManager>();
     }
 
-    void Start() => Refresh();
-    void Update() => Refresh(); // simple + reliable (we can optimize later)
+    void OnEnable()
+    {
+        if (!turn) turn = FindObjectOfType<TurnManager>();
+        if (turn)
+            turn.TurnChanged += HandleTurnChanged;
+        Refresh(turn ? turn.CurrentPlayer : 0);
+    }
 
-    void Refresh()
+    void OnDisable()
+    {
+        if (turn)
+            turn.TurnChanged -= HandleTurnChanged;
+    }
+
+    void HandleTurnChanged(int playerIndex)
+    {
+        Refresh(playerIndex);
+    }
+
+    void Refresh(int playerIndex)
     {
         if (!label || !turn || !players || players.Count == 0) return;
 
-        int i = turn.CurrentPlayer;
-
+        int i = Mathf.Clamp(playerIndex, 0, players.Count - 1);
         label.text = $"{players.GetName(i)} is playing";
         label.color = players.GetUIColor(i, Color.white);
     }

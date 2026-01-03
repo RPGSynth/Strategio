@@ -70,7 +70,7 @@ public class BoardState : MonoBehaviour
         return valid;
     }
 
-    public int Place(PieceSettings def, Vector2Int anchor, int rot90, bool flip, int ownerIndex, int placementOrder, out List<Vector2Int> covered)
+    public int Place(PieceSettings def, Vector2Int anchor, int rot90, bool flip, int ownerIndex, out List<Vector2Int> covered)
     {
         if (!CanPlace(def, anchor, rot90, flip, out covered))
             return -1;

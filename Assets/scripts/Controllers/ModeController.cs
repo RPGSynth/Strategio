@@ -20,6 +20,13 @@ public class ModeController : MonoBehaviour
 
     bool paletteMode = false;
 
+    void Start()
+    {
+        // Ensure first view uses the same fit logic as runtime mode switches.
+        paletteMode = false;
+        EnterBoardMode();
+    }
+
     public void TogglePaletteMode()
     {
         if (scoring && scoring.IsOverlayActive)

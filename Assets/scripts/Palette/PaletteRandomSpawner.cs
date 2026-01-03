@@ -4,7 +4,7 @@
 // use a neutral palette material, can repeat, and disappear when picked (handled in ModeController).
 //
 // Key features:
-// - Weighted size distribution: smaller pieces more frequent, max about `rarityMaxFactor` times rarer than min.
+// - Uniform size distribution: all sizes between minCells and maxCells are equally likely.
 // - Optional auto-resize of the Palette plane (kept square) to fit spawnCount reasonably.
 // - gapCells is an int because layout is cell-based (grid aligned).
 
@@ -28,9 +28,6 @@ public class PaletteRandomSpawner : MonoBehaviour
     [Min(1)] public int spawnCount = 10;
     [Min(1)] public int minCells = 1;
     [Min(1)] public int maxCells = 5;
-
-    [Tooltip("Max size is about this many times rarer than min size. Example 3 = max appears ~3x less often.")]
-    [Min(1.1f)] public float rarityMaxFactor = 3f;
 
     [Header("Layout")]
     [Tooltip("Padding from palette edges in world units.")]
@@ -119,7 +116,7 @@ public class PaletteRandomSpawner : MonoBehaviour
 
         for (int k = 0; k < spawnCount; k++)
         {
-            int size = PickSizeWeighted(rng);
+            int size = PickSizeUniform(rng);
 
             Vector2Int[] offsets = RandomPolyomino.Generate(size, rng); // normalized, contiguous
 
@@ -168,7 +165,8 @@ public class PaletteRandomSpawner : MonoBehaviour
 
     // --- Uniform size distribution ---
     // All sizes between minCells and maxCells are equally likely.
-    int PickSizeWeighted(System.Random rng)
+    // Legacy: weighted distribution was removed; reintroduce here if needed.
+    int PickSizeUniform(System.Random rng)
     {
         int lo = Mathf.Max(1, minCells);
         int hi = Mathf.Max(lo, maxCells);

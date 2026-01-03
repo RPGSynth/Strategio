@@ -15,7 +15,6 @@ public class PlacementController : MonoBehaviour
     public TurnManager turn;
     public PlayersSettings players;
     public ScoringManager scoring;
-    int placementCounter = 1;
 
     [Header("Current piece")]
     public PieceSettings currentPiece;
@@ -93,12 +92,6 @@ public class PlacementController : MonoBehaviour
         // Compute covered cells
         bool canPlace = state.CanPlace(currentPiece, anchor, rot90, flip, out var covered);
 
-        // Filter for drawing only
-        var drawable = new List<Vector2Int>(covered.Count);
-        foreach (var c in covered)
-            if (board.InBounds(c.x, c.y))
-                drawable.Add(c);
-
         // Draw preview
         DrawPreview(covered, canPlace);
 
@@ -107,9 +100,8 @@ public class PlacementController : MonoBehaviour
         {
             int owner = (turn && turn.PlayerCount > 0) ? turn.CurrentPlayer : 0;
 
-            int id = state.Place(currentPiece, anchor, rot90, flip, owner, placementCounter, out var placedCells);
+            int id = state.Place(currentPiece, anchor, rot90, flip, owner, out var placedCells);
             if (id == -1) return;
-            placementCounter++;
 
             var go = new GameObject($"Piece_{id}_{currentPiece.name}");
             placedVisuals[id] = go;
@@ -270,10 +262,7 @@ public class PlacementController : MonoBehaviour
         lastPlacement = null;
 
         if (turn)
-        {
-            turn.currentPlayerIndex = rec.owner;
-            Debug.Log($"Turn: {turn.players.GetName(turn.CurrentPlayer)} (#{turn.CurrentPlayer})");
-        }
+            turn.SetCurrentPlayerIndex(rec.owner);
     }
 
     public void UndoLastPlacementByButton()
